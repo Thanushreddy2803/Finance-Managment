@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beginners</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        function check(event) {
+            event.preventDefault();
+
+            const validUsername = "vipcharan";
+            const validPassword = "leetcode@8";
+
+            const username = document.getElementById("name").value.trim();
+            const password = document.getElementById("pass").value.trim();
+
+            if (username === "") {
+                alert("Username cannot be empty!");
+                return false;
+            }
+
+            if (username.length < 3) {
+                alert("Username must be at least 3 characters long!");
+                return false;
+            }
+
+            if (password === "") {
+                alert("Password cannot be empty!");
+                return false;
+            }
+
+            if (password.length < 6) {
+                alert("Password must be at least 6 characters long!");
+                return false;
+            }
+
+            if (username === validUsername && password === validPassword) {
+                alert("Login successful!");
+                window.location.href = "dashboard.html"; 
+                return true;
+            } else {
+                alert("Invalid username or password!");
+                return false;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="login">
+        <form onsubmit="check(event)">
+            <fieldset>
+                <legend>VIP's Login</legend>
+                <p>
+                    <label for="name">Name</label>
+                    <input type="text" id="name" placeholder="Enter your name">
+                </p>
+                <p>
+                    <label for="pass">Passcode</label>
+                    <input type="password" id="pass" placeholder="Enter your passcode">
+                </p>
+                <button type="submit" class="submit">Submit</button>
+            </fieldset>
+        </form>
+    </div>
+</body>
+</html>

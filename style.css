@@ -1,0 +1,64 @@
+/* Reset margins and paddings */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+/* Center alignment for the login form */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    background-color: #c8b1b1; /* Optional background color */
+
+}
+
+.login {
+    background-color: rgb(255, 255, 255); /* Optional background for the login form */
+    padding: 20px 30px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    width: 400px;
+    height: 300px;
+    text-align: center;
+}
+
+/* Form fieldset styling */
+fieldset {
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+/* Legend styling */
+legend {
+    font-weight: bold;
+    color: #333;
+}
+
+/* Input fields styling */
+input {
+    width: calc(100% - 20px); /* Full width minus padding */
+    padding: 8px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+/* Button styling */
+button.submit {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button.submit:hover {
+    background-color: #0056b3;
+}

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            padding: 20px;
+        }
+        .invoice-table, .form-section {
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table th, table td {
+            padding: 10px;
+            border: 1px solid #444;
+        }
+        table th {
+            background-color: #222;
+        }
+        .form-section input, .form-section select, .form-section button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            max-width: 300px;
+        }
+        .charts {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .chart-container {
+            width: 45%;
+            max-width: 400px;
+        }
+        .total {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #FFCE56;
+        }
+        .search-bar {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Invoice Dashboard</h1>
+
+        <!-- Search bar -->
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search by Invoice ID" onkeyup="filterInvoices()" />
+            <button onclick="exportToCSV()">Export CSV</button>
+        </div>
+
+        <div class="invoice-table">
+            <h2>Invoices</h2>
+            <table id="invoiceTable">
+                <thead>
+                    <tr>
+                        <th>Invoice</th>
+                        <th>Status</th>
+                        <th>Method</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="form-section">
+            <h2>Add New Invoice</h2>
+            <input type="text" id="invoiceId" placeholder="Invoice ID" />
+            <input type="text" id="status" placeholder="Status" />
+            <select id="method">
+                <option value="Credit Card">Credit Card</option>
+                <option value="PayPal">PayPal</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+            <input type="number" id="amount" placeholder="Amount" />
+            <input type="date" id="invoiceDate" />
+            <button onclick="addInvoice()">Add Invoice</button>
+        </div>
+
+        <div class="charts">
+            <div class="chart-container">
+                <canvas id="pieChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+
+        <div class="total">
+            Total Invoice Amount: $<span id="totalAmount">0.00</span>
+        </div>
+    </div>
+
+    <script>
+        const invoices = [];
+        const chartData = {
+            methods: ["Credit Card", "PayPal", "Bank Transfer"],
+            amounts: [0, 0, 0] 
+        };
+
+        const pieChartCtx = document.getElementById('pieChart').getContext('2d');
+        const barChartCtx = document.getElementById('barChart').getContext('2d');
+
+        const pieChart = new Chart(pieChartCtx, {
+            type: 'pie',
+            data: {
+                labels: chartData.methods,
+                datasets: [{
+                    data: chartData.amounts,
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+
+        const barChart = new Chart(barChartCtx, {
+            type: 'bar',
+            data: {
+                labels: chartData.methods,
+                datasets: [{
+                    label: 'Amount by Payment Method',
+                    data: chartData.amounts,
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        function updateCharts() {
+            pieChart.data.datasets[0].data = chartData.amounts;
+            barChart.data.datasets[0].data = chartData.amounts;
+            pieChart.update();
+            barChart.update();
+
+            const totalAmount = invoices.reduce((acc, invoice) => acc + invoice.amount, 0);
+            document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+        }
+
+        function addInvoice() {
+            const invoiceId = document.getElementById('invoiceId').value.trim();
+            const status = document.getElementById('status').value.trim();
+            const method = document.getElementById('method').value;
+            const amount = parseFloat(document.getElementById('amount').value.trim());
+            const invoiceDate = document.getElementById('invoiceDate').value;
+
+            if (!invoiceId || !status || !method || isNaN(amount) || amount <= 0 || !invoiceDate) {
+                alert('Please fill out all fields correctly.');
+                return;
+            }
+
+            invoices.push({ invoiceId, status, method, amount, date: invoiceDate });
+
+            chartData.amounts[chartData.methods.indexOf(method)] += amount;
+
+            const tableBody = document.getElementById('invoiceTable').querySelector('tbody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${invoiceId}</td>
+                <td>${status}</td>
+                <td>${method}</td>
+                <td>$${amount.toFixed(2)}</td>
+                <td>${invoiceDate}</td>
+                <td>
+                    <button onclick="editInvoice('${invoiceId}')">Edit</button>
+                    <button onclick="deleteInvoice('${invoiceId}')">Delete</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+
+            updateCharts();
+        }
+
+        function editInvoice(invoiceId) {
+            const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+            if (invoice) {
+                document.getElementById('invoiceId').value = invoice.invoiceId;
+                document.getElementById('status').value = invoice.status;
+                document.getElementById('method').value = invoice.method;
+                document.getElementById('amount').value = invoice.amount;
+                document.getElementById('invoiceDate').value = invoice.date;
+                deleteInvoice(invoiceId);
+            }
+        }
+
+        function deleteInvoice(invoiceId) {
+            const invoiceIndex = invoices.findIndex(inv => inv.invoiceId === invoiceId);
+            if (invoiceIndex > -1) {
+                invoices.splice(invoiceIndex, 1);
+                const tableBody = document.getElementById('invoiceTable').querySelector('tbody');
+                tableBody.innerHTML = '';
+                invoices.forEach(invoice => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${invoice.invoiceId}</td>
+                        <td>${invoice.status}</td>
+                        <td>${invoice.method}</td>
+                        <td>$${invoice.amount.toFixed(2)}</td>
+                        <td>${invoice.date}</td>
+                        <td>
+                            <button onclick="editInvoice('${invoice.invoiceId}')">Edit</button>
+                            <button onclick="deleteInvoice('${invoice.invoiceId}')">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                updateCharts();
+            }
+        }
+
+        function filterInvoices() {
+            const searchValue = document.getElementById('searchInput').value.toLowerCase();
+            const tableRows = document.querySelectorAll('#invoiceTable tbody tr');
+            tableRows.forEach(row => {
+                const invoiceId = row.cells[0].textContent.toLowerCase();
+                row.style.display = invoiceId.includes(searchValue) ? '' : 'none';
+            });
+        }
+
+        function exportToCSV() {
+            const csvRows = [];
+            const headers = ['Invoice ID', 'Status', 'Method', 'Amount', 'Date'];
+            csvRows.push(headers.join(','));
+
+            invoices.forEach(invoice => {
+                const row = [
+                    invoice.invoiceId,
+                    invoice.status,
+                    invoice.method,
+                    invoice.amount.toFixed(2),
+                    invoice.date
+                ];
+                csvRows.push(row.join(','));
+            });
+
+            const csvData = csvRows.join('\n');
+            const blob = new Blob([csvData], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'invoices.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
